@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { useAuth } from "../context/AuthContext";
 import { getProducts } from "../services/productService";
 import { Product } from "../types/product";
 
 export default function ProductsPage() {
   const router = useRouter();
+  const {
+    isAuthenticated,
+    loading: authLoading,
+    logout,
+  } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,12 +45,19 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, [page, pageSize]);
+    if (!authLoading && isAuthenticated) {
+      fetchProducts();
+    }
+  }, [
+    authLoading,
+    isAuthenticated,
+    page,
+    pageSize,
+  ]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/login");
+    logout();
+    router.replace("/login");
   };
 
   const handlePageChange = (newPage: number) => {
@@ -72,6 +84,27 @@ export default function ProductsPage() {
     page * pageSize,
     total
   );
+
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+
+  if (authLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">
+          Checking authentication...
+        </p>
+      </main>
+    );
+  }
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-gray-100">
@@ -298,11 +331,10 @@ export default function ProductsPage() {
                     onClick={() =>
                       handlePageChange(pageNumber)
                     }
-                    className={`rounded-lg px-3 py-2 text-sm ${
-                      pageNumber === page
-                        ? "bg-black text-white"
-                        : "border bg-white hover:bg-gray-50"
-                    }`}
+                    className={`rounded-lg px-3 py-2 text-sm ${pageNumber === page
+                      ? "bg-black text-white"
+                      : "border bg-white hover:bg-gray-50"
+                      }`}
                   >
                     {pageNumber}
                   </button>
