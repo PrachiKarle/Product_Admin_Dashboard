@@ -6,7 +6,7 @@ The dashboard allows authenticated users to view, search, filter, sort, add, edi
 
 ##  Live Demo
 
-Live Demo: `YOUR_DEPLOYED_VERCEL_URL`
+Live Demo: https://product-admin-dashboard-r3fu.vercel.app/login
 
 
 
@@ -67,3 +67,12 @@ Live Demo: `YOUR_DEPLOYED_VERCEL_URL`
 
 Example:
 Showing 21–40 of 194
+
+
+
+# A short note explaining your choices, one problem you faced and how you fixed it, and where AI helped you.
+I chose Next.js, React, Tailwind CSS, and Axios because they provided a simple structure for building a responsive dashboard, handling API requests, and managing routing. I used DummyJSON for authentication and product data.
+
+One problem I faced was with search requests. When users searched quickly, an older API response could overwrite a newer result. I solved this by adding debouncing and request tracking so only the latest request updates the product list.
+
+I used AI to understand Next.js concepts, debug errors, improve the implementation, and review my approach.
