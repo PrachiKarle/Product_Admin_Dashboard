@@ -1,5 +1,7 @@
+//products api calls
+
 import axiosInstance from "./axiosInstance";
-import { ProductResponse } from "../types/product";
+import { ProductResponse, Product } from "../types/product";
 
 export const getProducts = async (
   limit: number,
@@ -17,3 +19,9 @@ export const getProducts = async (
 
   return response.data;
 };
+
+
+export const getProduct=async(id:string):Promise<Product>=>{
+  const response=await axiosInstance.get<Product>(`/products/${id}`);
+  return response.data;
+}

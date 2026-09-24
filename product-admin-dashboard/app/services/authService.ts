@@ -1,3 +1,5 @@
+//Authentication api calls
+
 import axiosInstance from "./axiosInstance";
 import {
   LoginCredentials,
@@ -7,6 +9,7 @@ import {
 export const loginUser = async (
   credentials: LoginCredentials
 ): Promise<LoginResponse> => {
+  
   const response = await axiosInstance.post<LoginResponse>(
     "/auth/login",
     credentials

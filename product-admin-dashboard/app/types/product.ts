@@ -8,6 +8,7 @@ export interface Product {
   stock: number;
   thumbnail: string;
   images: string[];
+  reviews:ProductReview[];
 }
 
 export interface ProductResponse {
@@ -15,4 +16,12 @@ export interface ProductResponse {
   total: number;
   skip: number;
   limit: number;
+}
+
+export interface ProductReview{
+  rating: number;
+  comment: string;
+  date: string;
+  reviewerName: string;
+  reviewerEmail: string;
 }

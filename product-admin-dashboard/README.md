@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Product Admin Dashboard
 
-## Getting Started
+A responsive Product Admin Dashboard built with Next.js, React, TypeScript, Tailwind CSS, Axios, and DummyJSON.
+The dashboard provides authentication, protected routes, product listing, pagination, and a structured API service layer.
 
-First, run the development server:
+## Live Demo
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## GitHub Repository
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+## Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Axios
+- DummyJSON API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Authentication
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Login using DummyJSON authentication API
+- Username and password validation
+- Error handling for invalid credentials
+- Prevent duplicate login requests
+- Access token stored in localStorage
+- Global authentication state using React Context
+- Protected product dashboard
+- Logout functionality
+
+# Product Management
+
+- Product listing
+- Desktop table layout
+- Responsive mobile card layout
+- Product image
+- Product title
+- Category
+- Price
+- Rating
+- Stock
+
+# Pagination
+
+- API-based pagination using limit and skip
+- Previous and Next buttons
+- Page number navigation
+- Page size selection
+- 10, 20, and 50 products per page
+- Display of current item range
+
+# API Architecture
+
+The API logic is separated from UI components.
+
+Component
+    ↓
+Service
+    ↓
+Shared Axios Instance
+    ↓
+DummyJSON API
