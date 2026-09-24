@@ -5,15 +5,18 @@ import { ProductResponse, Product,CreateProduct } from "../types/product";
 
 export const getProducts = async (
   limit: number,
-  skip: number
+  skip: number,
+  search?:string
 ): Promise<ProductResponse> => {
   
   const response = await axiosInstance.get<ProductResponse>(
+    search?"/products/search":
     "/products",
     {
       params: {
         limit,
         skip,
+        ...(search && {q:search})
       },
     }
   );

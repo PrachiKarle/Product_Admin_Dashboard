@@ -101,7 +101,7 @@ export default function EditProductPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-8">
+    <main className="min-h-screen bg-gray-100 px-4 py-8 text-black">
       <div className="mx-auto max-w-2xl">
         <div className="rounded-xl bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-bold text-gray-900">
@@ -121,7 +121,7 @@ export default function EditProductPage() {
           <div className="mt-6 space-y-4">
             {/* Title */}
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-black">
                 Title
               </label>
 
@@ -130,13 +130,13 @@ export default function EditProductPage() {
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="Enter product title"
-                className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2"
+                className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 text-black"
               />
             </div>
 
             {/* Price */}
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-black">
                 Price
               </label>
 
@@ -146,13 +146,13 @@ export default function EditProductPage() {
                 onChange={(event) => setPrice(event.target.value)}
                 placeholder="Enter price"
                 min="0"
-                className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2"
+                className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 text-black"
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-black">
                 Category
               </label>
 
@@ -161,13 +161,13 @@ export default function EditProductPage() {
                 value={category}
                 onChange={(event) => setCategory(event.target.value)}
                 placeholder="Enter category"
-                className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2"
+                className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 text-black"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-black">
                 Description
               </label>
 
@@ -178,7 +178,7 @@ export default function EditProductPage() {
                 }
                 placeholder="Enter product description"
                 rows={5}
-                className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2"
+                className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 text-black"
               />
             </div>
 

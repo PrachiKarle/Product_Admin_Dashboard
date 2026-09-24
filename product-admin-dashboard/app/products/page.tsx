@@ -1,13 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
 
 import { useAuth } from "../context/AuthContext";
-import { getProducts, deleteProduct } from "../services/productService";
+
+import {
+  getProducts,
+  deleteProduct,
+} from "../services/productService";
+
 import { Product } from "../types/product";
 
 export default function ProductsPage() {
@@ -20,26 +30,50 @@ export default function ProductsPage() {
     logout,
   } = useAuth();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] =
+    useState<Product[]>([]);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [invalidUrl, setInvalidUrl] = useState(false);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [total, setTotal] = useState(0);
+  const [error, setError] =
+    useState("");
 
-  const rawPage = searchParams.get("page");
+  const [invalidUrl, setInvalidUrl] =
+    useState(false);
+
+  const [total, setTotal] =
+    useState(0);
+
+  // Search input
+  const [searchInput, setSearchInput] =
+    useState(
+      searchParams.get("search") || ""
+    );
+
+  // Used to prevent old requests
+  // from replacing newer results
+  const requestIdRef = useRef(0);
+
+  // Get page from URL
+  const rawPage =
+    searchParams.get("page");
 
   const pageParam =
-    rawPage === null ? 1 : Number(rawPage);
+    rawPage === null
+      ? 1
+      : Number(rawPage);
 
   const isInvalidPage =
     rawPage !== null &&
-    (!Number.isInteger(pageParam) || pageParam < 1);
+    (!Number.isInteger(pageParam) ||
+      pageParam < 1);
 
   const page = pageParam;
 
-  const rawPageSize = searchParams.get("pageSize");
+  // Get page size from URL
+  const rawPageSize =
+    searchParams.get("pageSize");
 
   const pageSizeParam =
     rawPageSize === null
@@ -48,41 +82,66 @@ export default function ProductsPage() {
 
   const isInvalidPageSize =
     rawPageSize !== null &&
-    ![10, 20, 50].includes(pageSizeParam);
+    ![10, 20, 50].includes(
+      pageSizeParam
+    );
 
   const pageSize = pageSizeParam;
 
+  // Get search from URL
+  const search =
+    searchParams.get("search") || "";
+
+  // Calculate total pages
   const totalPages = Math.ceil(
     total / pageSize
   );
 
-  // Calculate API skip value
-  const skip = (page - 1) * pageSize;
+  // Calculate API skip
+  const skip =
+    (page - 1) * pageSize;
 
   // Fetch products
   const fetchProducts = async () => {
-    if (isInvalidPage || isInvalidPageSize) {
+    if (
+      isInvalidPage ||
+      isInvalidPageSize
+    ) {
       setInvalidUrl(true);
       setLoading(false);
       return;
     }
+
+    const currentRequestId =
+      ++requestIdRef.current;
 
     try {
       setLoading(true);
       setError("");
       setInvalidUrl(false);
 
-      const data = await getProducts(
-        pageSize,
-        skip
-      );
+      const data =
+        await getProducts(
+          pageSize,
+          skip,
+          search || undefined
+        );
+
+      // Ignore old response
+      if (
+        currentRequestId !==
+        requestIdRef.current
+      ) {
+        return;
+      }
 
       setProducts(data.products);
       setTotal(data.total);
 
-      const calculatedTotalPages = Math.ceil(
-        data.total / pageSize
-      );
+      const calculatedTotalPages =
+        Math.ceil(
+          data.total / pageSize
+        );
 
       if (
         calculatedTotalPages > 0 &&
@@ -96,15 +155,31 @@ export default function ProductsPage() {
       setInvalidUrl(false);
     } catch (error) {
       console.error(error);
-      setError("Failed to load products.");
+
+      if (
+        currentRequestId ===
+        requestIdRef.current
+      ) {
+        setError(
+          "Failed to load products."
+        );
+      }
     } finally {
-      setLoading(false);
+      if (
+        currentRequestId ===
+        requestIdRef.current
+      ) {
+        setLoading(false);
+      }
     }
   };
 
   // Fetch when URL values change
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
+    if (
+      !authLoading &&
+      isAuthenticated
+    ) {
       fetchProducts();
     }
   }, [
@@ -112,16 +187,76 @@ export default function ProductsPage() {
     isAuthenticated,
     page,
     pageSize,
+    search,
+  ]);
+
+  // Sync search input with URL
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  // Search debounce
+  useEffect(() => {
+    const timer =
+      setTimeout(() => {
+        const trimmedSearch =
+          searchInput.trim();
+
+        const currentSearch =
+          searchParams.get(
+            "search"
+          ) || "";
+
+        if (
+          trimmedSearch ===
+          currentSearch
+        ) {
+          return;
+        }
+
+        const params =
+          new URLSearchParams(
+            searchParams.toString()
+          );
+
+        // Reset page when search changes
+        params.set("page", "1");
+
+        if (trimmedSearch) {
+          params.set(
+            "search",
+            trimmedSearch
+          );
+        } else {
+          params.delete("search");
+        }
+
+        router.push(
+          `/products?${params.toString()}`
+        );
+      }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    searchInput,
+    searchParams,
+    router,
   ]);
 
   // Protect products page
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (
+      !authLoading &&
+      !isAuthenticated
+    ) {
       router.replace("/login");
     }
   }, [
     authLoading,
     isAuthenticated,
+    router,
   ]);
 
   // Update page in URL
@@ -136,32 +271,41 @@ export default function ProductsPage() {
       return;
     }
 
-    const params = new URLSearchParams(
-      searchParams.toString()
+    const params =
+      new URLSearchParams(
+        searchParams.toString()
+      );
+
+    params.set(
+      "page",
+      String(newPage)
     );
 
-    params.set("page", String(newPage));
-    params.set("pageSize", String(pageSize));
+    params.set(
+      "pageSize",
+      String(pageSize)
+    );
 
     router.push(
       `/products?${params.toString()}`
     );
   };
 
-  // Update page size in URL
+  // Update page size
   const handlePageSizeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const newPageSize = Number(
-      event.target.value
-    );
+    const newPageSize =
+      Number(event.target.value);
 
-    const params = new URLSearchParams(
-      searchParams.toString()
-    );
+    const params =
+      new URLSearchParams(
+        searchParams.toString()
+      );
 
     // Reset to page 1
     params.set("page", "1");
+
     params.set(
       "pageSize",
       String(newPageSize)
@@ -178,41 +322,55 @@ export default function ProductsPage() {
     router.replace("/login");
   };
 
+  // Delete product
+  const handleDeleteProduct =
+    async (
+      product: Product
+    ) => {
+      const confirmed =
+        window.confirm(
+          `Are you sure you want to delete "${product.title}"?`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        await deleteProduct(
+          product.id
+        );
+
+        setProducts(
+          (currentProducts) =>
+            currentProducts.filter(
+              (item) =>
+                item.id !==
+                product.id
+            )
+        );
+      } catch (error) {
+        console.error(error);
+
+        setError(
+          "Failed to delete product. Please try again."
+        );
+      }
+    };
+
   // Showing range
   const startItem =
     products.length === 0
       ? 0
-      : (page - 1) * pageSize + 1;
+      : (page - 1) *
+          pageSize +
+        1;
 
-  const endItem = Math.min(
-    page * pageSize,
-    total
-  );
-
-
-  ///deletion
-  const handleDeleteProduct = async (product: Product) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${product.title}"?`
+  const endItem =
+    Math.min(
+      page * pageSize,
+      total
     );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await deleteProduct(product.id);
-
-      setProducts((currentProducts) =>
-        currentProducts.filter(
-          (item) => item.id !== product.id
-        )
-      );
-    } catch (error) {
-      console.error(error);
-      setError("Failed to delete product. Please try again.");
-    }
-  };
 
   // Authentication loading
   if (authLoading) {
@@ -244,13 +402,15 @@ export default function ProductsPage() {
           </h2>
 
           <p className="mt-2 text-gray-500">
-            The page or URL parameter you entered
-            is invalid.
+            The page or URL parameter
+            you entered is invalid.
           </p>
 
           <button
             onClick={() =>
-              router.push("/products")
+              router.push(
+                "/products"
+              )
             }
             className="mt-6 rounded-lg bg-black px-5 py-2 text-sm font-medium text-white hover:bg-gray-800"
           >
@@ -260,9 +420,6 @@ export default function ProductsPage() {
       </main>
     );
   }
-
-
-
 
   return (
     <main className="min-h-screen bg-gray-100">
@@ -284,17 +441,48 @@ export default function ProductsPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-8">
         {/* Heading */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Products
-          </h2>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Products
+            </h2>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Manage your products
-          </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Manage your products
+            </p>
+          </div>
+
+          {/* Add Product */}
+          <button
+            onClick={() =>
+              router.push(
+                "/products/add"
+              )
+            }
+            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+          >
+            Add Product
+          </button>
         </div>
 
+        {/* Search */}
+        <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Search Products
+          </label>
 
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(event) =>
+              setSearchInput(
+                event.target.value
+              )
+            }
+            placeholder="Search by product name..."
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-black outline-none focus:border-black"
+          />
+        </div>
 
         {/* Loading */}
         {loading && (
@@ -313,7 +501,9 @@ export default function ProductsPage() {
             </p>
 
             <button
-              onClick={fetchProducts}
+              onClick={
+                fetchProducts
+              }
               className="rounded-lg bg-black px-5 py-2 text-sm text-white hover:bg-gray-800"
             >
               Retry
@@ -327,7 +517,9 @@ export default function ProductsPage() {
           products.length === 0 && (
             <div className="rounded-lg bg-white p-8 text-center shadow-sm">
               <p className="text-gray-500">
-                No products found.
+                {search
+                  ? "No products found for your search."
+                  : "No products found."}
               </p>
             </div>
           )}
@@ -361,128 +553,220 @@ export default function ProductsPage() {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-black">
                         Stock
                       </th>
+
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-black">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {products.map((product) => (
-                      <tr
-                        key={product.id}
-                        className="border-b last:border-b-0 hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={product.thumbnail}
-                              alt={product.title}
-                              className="h-14 w-14 rounded-lg object-cover"
-                            />
-
-                            <span className="font-medium text-gray-900">
-                              {product.title}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          {product.category}
-                        </td>
-
-                        <td className="px-6 py-4 text-sm font-medium text-black">
-                          ${product.price}
-                        </td>
-
-                        <td className="px-6 py-4 text-sm text-black">
-                          ⭐ {product.rating}
-                        </td>
-
-                        <td className="px-6 py-4 text-sm text-black">
-                          {product.stock}
-                        </td>
-
-                        <button
-                          onClick={() => handleDeleteProduct(product)}
-                          className="rounded-lg border px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    {products.map(
+                      (product) => (
+                        <tr
+                          key={product.id}
+                          className="border-b last:border-b-0 hover:bg-gray-50"
                         >
-                          Delete
-                        </button>
-                      </tr>
-                    ))}
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-4">
+                              <img
+                                src={
+                                  product.thumbnail
+                                }
+                                alt={
+                                  product.title
+                                }
+                                className="h-14 w-14 rounded-lg object-cover"
+                              />
+
+                              <span className="font-medium text-gray-900">
+                                {
+                                  product.title
+                                }
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {
+                              product.category
+                            }
+                          </td>
+
+                          <td className="px-6 py-4 text-sm font-medium text-black">
+                            $
+                            {
+                              product.price
+                            }
+                          </td>
+
+                          <td className="px-6 py-4 text-sm text-black">
+                            ⭐{" "}
+                            {
+                              product.rating
+                            }
+                          </td>
+
+                          <td className="px-6 py-4 text-sm text-black">
+                            {
+                              product.stock
+                            }
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              {/* Edit */}
+                              <button
+                                onClick={() =>
+                                  router.push(
+                                    `/products/${product.id}/edit`
+                                  )
+                                }
+                                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 text-black"
+                              >
+                                Edit
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                onClick={() =>
+                                  handleDeleteProduct(
+                                    product
+                                  )
+                                }
+                                className="rounded-lg border px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    )}
                   </tbody>
                 </table>
               </div>
 
               {/* Mobile cards */}
               <div className="space-y-4 md:hidden">
-                {products.map((product) => (
-                  <div
-                    key={product.id}
-                    className="rounded-lg bg-white p-4 shadow-sm"
-                  >
-                    <div className="flex gap-4">
-                      <img
-                        src={product.thumbnail}
-                        alt={product.title}
-                        className="h-20 w-20 rounded-lg object-cover"
-                      />
+                {products.map(
+                  (product) => (
+                    <div
+                      key={
+                        product.id
+                      }
+                      className="rounded-lg bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex gap-4">
+                        <img
+                          src={
+                            product.thumbnail
+                          }
+                          alt={
+                            product.title
+                          }
+                          className="h-20 w-20 rounded-lg object-cover"
+                        />
 
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">
-                          {product.title}
-                        </h3>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">
+                            {
+                              product.title
+                            }
+                          </h3>
 
-                        <p className="mt-1 text-sm text-gray-500">
-                          {product.category}
-                        </p>
+                          <p className="mt-1 text-sm text-gray-500">
+                            {
+                              product.category
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-3 gap-3 border-t pt-4">
+                        <div>
+                          <p className="text-xs text-gray-500">
+                            Price
+                          </p>
+
+                          <p className="font-medium text-black">
+                            $
+                            {
+                              product.price
+                            }
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-gray-500">
+                            Rating
+                          </p>
+
+                          <p className="font-medium">
+                            ⭐{" "}
+                            {
+                              product.rating
+                            }
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-gray-500">
+                            Stock
+                          </p>
+
+                          <p className="font-medium">
+                            {
+                              product.stock
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Mobile actions */}
+                      <div className="mt-4 flex gap-2 border-t pt-4">
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/products/${product.id}/edit`
+                            )
+                          }
+                          className="flex-1 rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            handleDeleteProduct(
+                              product
+                            )
+                          }
+                          className="flex-1 rounded-lg border px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
-
-                    <div className="mt-4 grid grid-cols-3 gap-3 border-t pt-4">
-                      <div>
-                        <p className="text-xs text-gray-500">
-                          Price
-                        </p>
-
-                        <p className="font-medium text-black">
-                          ${product.price}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs text-gray-500">
-                          Rating
-                        </p>
-
-                        <p className="font-medium">
-                          ⭐ {product.rating}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs text-gray-500">
-                          Stock
-                        </p>
-
-                        <p className="font-medium">
-                          {product.stock}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
 
               {/* Pagination */}
               <div className="mt-6 flex flex-col gap-4 rounded-lg bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-gray-600">
-                  Showing {startItem}–{endItem} of
+                  Showing{" "}
+                  {startItem}–
+                  {endItem} of{" "}
                   {total}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Page size */}
                   <select
-                    value={pageSize}
+                    value={
+                      pageSize
+                    }
                     onChange={
                       handlePageSizeChange
                     }
@@ -508,7 +792,9 @@ export default function ProductsPage() {
                         page - 1
                       )
                     }
-                    disabled={page === 1}
+                    disabled={
+                      page === 1
+                    }
                     className="rounded-lg border px-3 py-2 text-sm text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Previous
@@ -516,24 +802,41 @@ export default function ProductsPage() {
 
                   {/* Page numbers */}
                   {Array.from(
-                    { length: totalPages },
-                    (_, index) => index + 1
-                  ).map((pageNumber) => (
-                    <button
-                      key={pageNumber}
-                      onClick={() =>
-                        handlePageChange(
+                    {
+                      length:
+                        totalPages,
+                    },
+                    (
+                      _,
+                      index
+                    ) =>
+                      index + 1
+                  ).map(
+                    (
+                      pageNumber
+                    ) => (
+                      <button
+                        key={
                           pageNumber
-                        )
-                      }
-                      className={`rounded-lg px-3 py-2 text-sm ${pageNumber === page
-                        ? "bg-black text-white"
-                        : "border bg-white hover:bg-gray-50"
+                        }
+                        onClick={() =>
+                          handlePageChange(
+                            pageNumber
+                          )
+                        }
+                        className={`rounded-lg px-3 py-2 text-sm ${
+                          pageNumber ===
+                          page
+                            ? "bg-black text-white"
+                            : "border bg-white hover:bg-gray-50"
                         }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  ))}
+                      >
+                        {
+                          pageNumber
+                        }
+                      </button>
+                    )
+                  )}
 
                   {/* Next */}
                   <button
@@ -543,7 +846,8 @@ export default function ProductsPage() {
                       )
                     }
                     disabled={
-                      page === totalPages
+                      page ===
+                      totalPages
                     }
                     className="rounded-lg border px-3 py-2 text-sm text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
                   >
