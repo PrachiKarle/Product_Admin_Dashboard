@@ -1,68 +1,69 @@
 # Product Admin Dashboard
 
-A responsive Product Admin Dashboard built with Next.js, React, TypeScript, Tailwind CSS, Axios, and DummyJSON.
-The dashboard provides authentication, protected routes, product listing, pagination, and a structured API service layer.
+A responsive Product Admin Dashboard built with Next.js, React, Tailwind CSS, Axios, and DummyJSON API**.
 
-## Live Demo
+The dashboard allows authenticated users to view, search, filter, sort, add, edit, and delete products.
 
+##  Live Demo
 
-## GitHub Repository
-
+Live Demo: `YOUR_DEPLOYED_VERCEL_URL`
 
 
 
 ## Tech Stack
 
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-- Axios
-- DummyJSON API
+- Next.js – React framework and routing
+- React – UI development
+- TypeScript – Type safety
+- Tailwind CSS – Responsive styling
+- Axios – API requests
+- DummyJSON API – Authentication and product data
 
 
 ## Features
 
-# Authentication
+### Authentication
 
 - Login using DummyJSON authentication API
-- Username and password validation
-- Error handling for invalid credentials
-- Prevent duplicate login requests
-- Access token stored in localStorage
-- Global authentication state using React Context
-- Protected product dashboard
+- Test credentials:
+  - Username: emilys
+  - Password:emilyspass
+- Displays an error for invalid credentials
+- Stores authentication token in localStorage
+- Protected product pages
 - Logout functionality
+- Prevents duplicate login requests
 
-# Product Management
+### Product Management
 
-- Product listing
-- Desktop table layout
-- Responsive mobile card layout
-- Product image
-- Product title
-- Category
-- Price
-- Rating
-- Stock
+- View product list
+- Responsive desktop table
+- Responsive mobile product cards
+- Product details page
+- Add new products
+- Edit existing products
+- Delete products with confirmation
+- Form validation
+- Prevents duplicate save requests
 
-# Pagination
+### Search
 
-- API-based pagination using limit and skip
+- Search products using DummyJSON search API
+- Debounced search input
+- Automatically resets to page 1 when searching
+- Search value is preserved in the URL
+- Handles stale API responses so older requests cannot overwrite newer results
+
+### Pagination
+
+- Server-side pagination using limit and skip
+- Page size options:
+  - 10
+  - 20
+  - 50
 - Previous and Next buttons
-- Page number navigation
-- Page size selection
-- 10, 20, and 50 products per page
-- Display of current item range
+- Page numbers
+- Displays the current result range
 
-# API Architecture
-
-The API logic is separated from UI components.
-
-Component
-    ↓
-Service
-    ↓
-Shared Axios Instance
-    ↓
-DummyJSON API
+Example:
+Showing 21–40 of 194
