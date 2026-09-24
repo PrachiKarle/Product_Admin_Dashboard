@@ -14,6 +14,7 @@ export default function ProductDetailsPage() {
   const id = params.id as string;
 
   const [product, setProduct] = useState<Product | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -34,7 +35,6 @@ export default function ProductDetailsPage() {
           error.response?.status === 404
         ) {
           notFound();
-          
         }
 
         setError("Failed to load product.");
@@ -46,7 +46,7 @@ export default function ProductDetailsPage() {
     if (id) {
       fetchProduct();
     }
-  }, [id, router]);
+  }, [id]);
 
   if (loading) {
     return (

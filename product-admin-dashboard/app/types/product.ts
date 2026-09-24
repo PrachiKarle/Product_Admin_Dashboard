@@ -25,3 +25,11 @@ export interface ProductReview{
   reviewerName: string;
   reviewerEmail: string;
 }
+
+
+export interface CreateProduct {
+  title: string;
+  price: number;
+  description?: string;
+  category?: string;
+}

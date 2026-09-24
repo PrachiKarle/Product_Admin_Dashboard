@@ -7,7 +7,7 @@ import {
 } from "next/navigation";
 
 import { useAuth } from "../context/AuthContext";
-import { getProducts } from "../services/productService";
+import { getProducts, deleteProduct } from "../services/productService";
 import { Product } from "../types/product";
 
 export default function ProductsPage() {
@@ -21,20 +21,13 @@ export default function ProductsPage() {
   } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [invalidUrl, setInvalidUrl] = useState(false);
 
   const [total, setTotal] = useState(0);
 
-  /*
-   * Get page from URL
-   *
-   * /products              -> page 1
-   * /products?page=2       -> page 2
-   * /products?page=abc     -> invalid
-   * /products?page=-1      -> invalid
-   */
   const rawPage = searchParams.get("page");
 
   const pageParam =
@@ -46,11 +39,6 @@ export default function ProductsPage() {
 
   const page = pageParam;
 
-  /*
-   * Get page size from URL
-   *
-   * Allowed values: 10, 20, 50
-   */
   const rawPageSize = searchParams.get("pageSize");
 
   const pageSizeParam =
@@ -73,7 +61,6 @@ export default function ProductsPage() {
 
   // Fetch products
   const fetchProducts = async () => {
-    // Don't call API if URL itself is invalid
     if (isInvalidPage || isInvalidPageSize) {
       setInvalidUrl(true);
       setLoading(false);
@@ -93,16 +80,6 @@ export default function ProductsPage() {
       setProducts(data.products);
       setTotal(data.total);
 
-      /*
-       * Check if page exists.
-       *
-       * Example:
-       * total = 194
-       * pageSize = 10
-       * totalPages = 20
-       *
-       * ?page=999 -> invalid
-       */
       const calculatedTotalPages = Math.ceil(
         data.total / pageSize
       );
@@ -145,7 +122,6 @@ export default function ProductsPage() {
   }, [
     authLoading,
     isAuthenticated,
-    router,
   ]);
 
   // Update page in URL
@@ -213,6 +189,31 @@ export default function ProductsPage() {
     total
   );
 
+
+  ///deletion
+  const handleDeleteProduct = async (product: Product) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${product.title}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteProduct(product.id);
+
+      setProducts((currentProducts) =>
+        currentProducts.filter(
+          (item) => item.id !== product.id
+        )
+      );
+    } catch (error) {
+      console.error(error);
+      setError("Failed to delete product. Please try again.");
+    }
+  };
+
   // Authentication loading
   if (authLoading) {
     return (
@@ -260,6 +261,9 @@ export default function ProductsPage() {
     );
   }
 
+
+
+
   return (
     <main className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -289,6 +293,8 @@ export default function ProductsPage() {
             Manage your products
           </p>
         </div>
+
+
 
         {/* Loading */}
         {loading && (
@@ -393,6 +399,13 @@ export default function ProductsPage() {
                         <td className="px-6 py-4 text-sm text-black">
                           {product.stock}
                         </td>
+
+                        <button
+                          onClick={() => handleDeleteProduct(product)}
+                          className="rounded-lg border px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
                       </tr>
                     ))}
                   </tbody>
@@ -462,7 +475,7 @@ export default function ProductsPage() {
               {/* Pagination */}
               <div className="mt-6 flex flex-col gap-4 rounded-lg bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-gray-600">
-                  Showing {startItem}–{endItem} of{" "}
+                  Showing {startItem}–{endItem} of
                   {total}
                 </p>
 
@@ -513,11 +526,10 @@ export default function ProductsPage() {
                           pageNumber
                         )
                       }
-                      className={`rounded-lg px-3 py-2 text-sm ${
-                        pageNumber === page
-                          ? "bg-black text-white"
-                          : "border bg-white hover:bg-gray-50"
-                      }`}
+                      className={`rounded-lg px-3 py-2 text-sm ${pageNumber === page
+                        ? "bg-black text-white"
+                        : "border bg-white hover:bg-gray-50"
+                        }`}
                     >
                       {pageNumber}
                     </button>

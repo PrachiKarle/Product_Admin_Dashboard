@@ -1,4 +1,3 @@
-//AxiosConfiguration
 
 import axios from "axios";
 
